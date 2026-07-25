@@ -60,7 +60,7 @@ export const DailyShiftGoalsModal: React.FC<DailyShiftGoalsModalProps> = ({
   const roleTabs: { id: 'all' | RoleGroup; label: string; icon: string }[] = [
     { id: 'all', label: 'All Roles', icon: '🎯' },
     { id: 'nurse', label: 'Nurse', icon: '👩‍⚕️' },
-    { id: 'patient', label: 'Patient Relations', icon: '❤️' },
+    { id: 'patient', label: 'Patients', icon: '❤️' },
     { id: 'doctor', label: 'Doctor', icon: '👨‍⚕️' },
     { id: 'cantina', label: 'Cantina', icon: '☕' },
     { id: 'janitor', label: 'Janitor', icon: '🧹' },
@@ -108,7 +108,7 @@ export const DailyShiftGoalsModal: React.FC<DailyShiftGoalsModalProps> = ({
               </div>
               <div>
                 <span className="font-bold text-white">Hospital Staff Level {currentLevel}</span>
-                <span className="text-slate-400 text-[11px] block">6 Department Role Groups</span>
+                <span className="text-slate-400 text-[11px] block">6 Role Groups</span>
               </div>
             </div>
 

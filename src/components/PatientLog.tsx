@@ -40,7 +40,7 @@ export const PatientLog: React.FC<PatientLogProps> = ({
             <span className="text-2xl">📋</span>
             <div>
               <h3 className="font-bold text-lg text-white">Hall 16 Patient Chart & Routine Log</h3>
-              <p className="text-xs text-slate-400">10 Patients Assigned to Shift</p>
+              <p className="text-xs text-slate-400">{patients.length} Patients Assigned to Shift</p>
             </div>
           </div>
 

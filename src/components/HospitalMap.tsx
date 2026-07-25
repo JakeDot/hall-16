@@ -82,7 +82,7 @@ export const HospitalMap: React.FC<HospitalMapProps> = ({
             <Navigation className="w-5 h-5 text-emerald-400 animate-pulse" />
             <div>
               <h3 className="font-bold text-base text-white">Hospital Interactive Map (27 Zones)</h3>
-              <p className="text-xs text-slate-400">Navigate to wing locations mapped across all 6 Department Role Groups</p>
+              <p className="text-xs text-slate-400">Navigate to wing locations mapped across all 6 Role Groups</p>
             </div>
           </div>
 

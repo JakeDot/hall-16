@@ -293,7 +293,7 @@ export const ROLE_GROUP_INFO: Record<RoleGroup, { name: string; icon: string; co
     description: 'Earned through medication rounds, vital monitoring, and nursing shift duties.'
   },
   patient: {
-    name: 'Patient Relations',
+    name: 'Patients',
     icon: '❤️',
     color: 'text-rose-400 bg-rose-950/80 border-rose-500/40',
     description: 'Earned through patient dialogues, hydration, meals, and comfort care.'

@@ -2093,7 +2093,7 @@ export const SceneView: React.FC<SceneViewProps> = ({
                   <span className="text-4xl">🧩</span>
                   <div>
                     <h3 className="font-bold text-base text-white">Patient Recovery & Activity Lounge</h3>
-                    <p className="text-xs text-slate-400">Patient Relations - Art therapy easels, music listening stations, and board games.</p>
+                    <p className="text-xs text-slate-400">Patients - Art therapy easels, music listening stations, and board games.</p>
                   </div>
                 </div>
                 <button
