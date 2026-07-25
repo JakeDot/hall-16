@@ -186,10 +186,10 @@ export const MissionsModal: React.FC<MissionsModalProps> = ({
               <div className="flex items-center gap-2">
                 <h3 className="font-bold text-base text-white">Hospital Department Missions & Trophies</h3>
                 <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                  6 Role Departments
+                  6 Role Groups
                 </span>
               </div>
-              <p className="text-xs text-slate-400">Pursue dedicated missions for Patient Relations, Doctor, Cantina, Janitor & Director</p>
+              <p className="text-xs text-slate-400">Pursue dedicated missions for Nurse, Patients, Doctor, Cantina, Janitor & Director</p>
             </div>
           </div>
 

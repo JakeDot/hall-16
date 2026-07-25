@@ -675,7 +675,7 @@ export const LOCATIONS_META: Record<LocationId, {
   },
   patient_lounge: {
     title: 'Patient Recovery & Activity Lounge',
-    subtitle: 'Patient Relations - Therapeutic Relaxation Center',
+    subtitle: 'Patients - Therapeutic Relaxation Center',
     bgGradient: 'from-rose-950 via-slate-900 to-pink-950',
     icon: '🧩',
     description: 'Cozy patient activity room equipped with art therapy easels, music listening stations, board games, and plush armchairs.'

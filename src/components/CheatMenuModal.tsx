@@ -634,7 +634,7 @@ export const CheatMenuModal: React.FC<CheatMenuModalProps> = ({
           {/* TAB 4: ROLES & XP */}
           {activeTab === 'roles' && (
             <div className="space-y-4">
-              <p className="text-xs text-slate-400">Boost Experience Points (XP) across all 6 Hospital Department Roles.</p>
+              <p className="text-xs text-slate-400">Boost Experience Points (XP) across all 6 Role Groups.</p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {[

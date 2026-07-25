@@ -2,7 +2,7 @@ import { DailyShiftGoal, RoleGroup } from '../types/game';
 
 /**
  * Procedurally generates daily shift goals spanning all 6 hospital department role groups:
- * Nurse, Patient Relations, Doctor, Cantina & Catering, Janitor & Sanitation, and Hospital Director.
+ * Nurse, Patients, Doctor, Cantina & Catering, Janitor & Sanitation, and Hospital Director.
  */
 export function generateDailyShiftGoals(day: number): DailyShiftGoal[] {
   const daySeed = day % 3;
@@ -22,7 +22,7 @@ export function generateDailyShiftGoals(day: number): DailyShiftGoal[] {
         rewardXp: 200,
         icon: '💊'
       },
-      // Patient Relations Mission
+      // Patients Mission
       {
         id: `goal_talk_${day}_patient`,
         title: 'Patient Comfort Consultation',
@@ -103,7 +103,7 @@ export function generateDailyShiftGoals(day: number): DailyShiftGoal[] {
         rewardXp: 175,
         icon: '⚡'
       },
-      // Patient Relations Mission
+      // Patients Mission
       {
         id: `goal_food_${day}_patient`,
         title: 'Serve Dietary Meal Trays',
@@ -184,7 +184,7 @@ export function generateDailyShiftGoals(day: number): DailyShiftGoal[] {
         rewardXp: 250,
         icon: '💊'
       },
-      // Patient Relations Mission
+      // Patients Mission
       {
         id: `goal_talk_${day}_patient`,
         title: 'Comfort 3 Ward Patients',

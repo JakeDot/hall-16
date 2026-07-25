@@ -71,12 +71,18 @@ export const Header: React.FC<HeaderProps> = ({
   const hours12 = hours24 % 12 === 0 ? 12 : hours24 % 12;
   const timeFormatted = `${hours12.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')} ${period}`;
 
+  // Mission 1 tracks only the 10 Hall 16 patients (rooms 101-110); once hospital_exploration
+  // unlocks the other wings, progress reflects the full patient roster.
+  const missionPatients = state.phase === 'hall16_routine'
+    ? state.patients.filter(p => p.roomNumber >= 101 && p.roomNumber <= 110)
+    : state.patients;
+
   // Count taken care of patients
-  const takenCareOfCount = state.patients.filter(
+  const takenCareOfCount = missionPatients.filter(
     p => p.medicationGiven && p.waterGiven && p.foodGiven
   ).length;
 
-  const totalPatients = state.patients.length;
+  const totalPatients = missionPatients.length;
   const isPhase1Complete = takenCareOfCount >= totalPatients;
 
   return (
@@ -313,7 +319,7 @@ export const Header: React.FC<HeaderProps> = ({
             <ClipboardList className="w-4 h-4 text-cyan-400" />
             <span className="hidden md:inline">Ward Log</span>
             <span className="bg-cyan-500/20 text-cyan-300 px-1.5 py-0.2 rounded-full text-[10px] font-bold">
-              {takenCareOfCount}/10
+              {takenCareOfCount}/{totalPatients}
             </span>
           </button>
 
