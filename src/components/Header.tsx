@@ -18,7 +18,8 @@ import {
   ChevronDown,
   Wrench,
   Users,
-  Handshake
+  Handshake,
+  Coins
 } from 'lucide-react';
 import { GameState, GamePhase, WEATHER_META, RoleGroup, ROLE_GROUP_INFO } from '../types/game';
 import { sound } from '../utils/audio';
@@ -157,20 +158,20 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Player Self Vitals & Currency Balance */}
-        <div className="flex items-center gap-3 bg-slate-800/60 px-3 py-1.5 rounded-xl border border-slate-700/50 text-xs">
-          
+        <div className="flex items-center gap-2 bg-slate-800/60 px-3 py-1.5 rounded-xl border border-slate-700/50 text-xs">
+
           {/* Nurse Credits (100:1 Ratio) */}
           <button
             onClick={() => {
               sound.playClick();
               onOpenStore();
             }}
-            className="flex items-center gap-1.5 bg-amber-950/80 hover:bg-amber-900/90 text-amber-300 px-2.5 py-1 rounded-lg border border-amber-500/40 transition-all font-bold group cursor-pointer"
+            className="flex items-center gap-1.5 bg-amber-950/60 hover:bg-amber-900/70 text-amber-300 px-2.5 py-1 rounded-lg border border-amber-500/30 transition-colors font-bold cursor-pointer"
             title="In-Game Currency: 100 Nurse Credits = $1.00 USD (Click to Open Store)"
           >
-            <span className="text-base group-hover:scale-110 transition-transform">🪙</span>
+            <Coins className="w-3.5 h-3.5 text-amber-400" />
             <span className="font-mono text-sm">{state.nurseCredits ?? 500}</span>
-            <span className="text-[10px] text-amber-400/80 font-semibold hidden lg:inline">Credits (100:1)</span>
+            <span className="text-[10px] text-amber-400/70 font-semibold hidden lg:inline">Credits</span>
           </button>
 
           {/* Department Role Groups Button (Nurse, Patient, Doctor, Cantina, Janitor, Director) */}
@@ -179,12 +180,11 @@ export const Header: React.FC<HeaderProps> = ({
               sound.playClick();
               onOpenRoleModal();
             }}
-            className="flex items-center gap-1.5 bg-sky-950/80 hover:bg-sky-900/90 text-sky-300 px-2.5 py-1 rounded-lg border border-sky-500/40 transition-all font-bold group cursor-pointer"
+            className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1 rounded-lg border border-slate-700 transition-colors font-bold cursor-pointer"
             title="Click to view EXP & Credits split into 6 groups: Nurse, Patient, Doctor, Cantina, Janitor, Director"
           >
-            <Award className="w-3.5 h-3.5 text-sky-400 group-hover:scale-110 transition-transform" />
-            <span className="text-xs font-mono">6 Roles</span>
-            <span className="text-[10px] bg-sky-500/30 text-sky-200 px-1.5 py-0.5 rounded font-semibold hidden lg:inline">EXP & Credits</span>
+            <Award className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="text-xs">6 Roles</span>
           </button>
 
           {/* Inter-Role Trading System Button */}
@@ -193,12 +193,11 @@ export const Header: React.FC<HeaderProps> = ({
               sound.playClick();
               onOpenTradeModal();
             }}
-            className="flex items-center gap-1.5 bg-gradient-to-r from-purple-950 via-indigo-950 to-slate-900 hover:from-purple-900 hover:to-indigo-900 text-emerald-300 px-2.5 py-1 rounded-lg border border-emerald-500/40 shadow-md transition-all font-bold group cursor-pointer"
+            className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1 rounded-lg border border-slate-700 transition-colors font-bold cursor-pointer"
             title="Open Trading System: Trade items, favours, and credits between roles"
           >
-            <Handshake className="w-3.5 h-3.5 text-emerald-400 group-hover:scale-110 transition-transform" />
-            <span className="text-xs font-bold">Trade 🤝</span>
-            <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded font-semibold hidden lg:inline">Items • Favours • Credits</span>
+            <Handshake className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="text-xs">Trade</span>
           </button>
 
           {/* Active Playable Role Switcher Dropdown */}
@@ -208,17 +207,17 @@ export const Header: React.FC<HeaderProps> = ({
                 sound.playClick();
                 setShowRoleDropdown(!showRoleDropdown);
               }}
-              className="flex items-center gap-1.5 bg-gradient-to-r from-indigo-950 via-purple-950 to-slate-900 hover:from-indigo-900 hover:to-purple-900 text-purple-200 px-2.5 py-1 rounded-lg border border-purple-500/50 shadow-md transition-all font-bold cursor-pointer"
+              className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-white px-2.5 py-1 rounded-lg border border-cyan-500/40 transition-colors font-bold cursor-pointer"
               title="Click to swap active playable role during gameplay"
             >
               <span className="text-sm">{roleMeta?.icon || '👩‍⚕️'}</span>
               <span className="text-xs font-bold">{roleMeta?.name.replace(' Department', '').replace(' Care', '') || 'Nurse'}</span>
-              <ChevronDown className="w-3.5 h-3.5 text-purple-400" />
+              <ChevronDown className="w-3.5 h-3.5 text-cyan-400" />
             </button>
 
             {showRoleDropdown && (
-              <div className="absolute top-full left-0 mt-2 w-56 bg-slate-900 border border-purple-500/40 rounded-2xl shadow-2xl p-2 z-50 animate-in fade-in zoom-in duration-150 space-y-1">
-                <div className="px-2 py-1 text-[10px] uppercase font-extrabold tracking-wider text-purple-400 border-b border-slate-800 flex justify-between items-center">
+              <div className="absolute top-full left-0 mt-2 w-56 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-2 z-50 animate-in fade-in zoom-in duration-150 space-y-1">
+                <div className="px-2 py-1 text-[10px] uppercase font-extrabold tracking-wider text-cyan-400 border-b border-slate-800 flex justify-between items-center">
                   <span>Switch Playable Role</span>
                   <span>6 Playable</span>
                 </div>
@@ -235,7 +234,7 @@ export const Header: React.FC<HeaderProps> = ({
                       }}
                       className={`w-full flex items-center justify-between p-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                         isActive
-                          ? 'bg-purple-600 text-white shadow'
+                          ? 'bg-cyan-600 text-white shadow'
                           : 'hover:bg-slate-800 text-slate-200'
                       }`}
                     >
@@ -350,10 +349,10 @@ export const Header: React.FC<HeaderProps> = ({
               sound.playClick();
               onOpenGoals();
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-950/80 hover:bg-emerald-900 text-xs font-bold text-emerald-300 shadow-md transition-all border border-emerald-500/40 relative"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-medium text-slate-200 transition-colors"
           >
             <Target className="w-4 h-4 text-emerald-400" />
-            <span>Shift Goals 🎯</span>
+            <span className="hidden md:inline">Shift Goals</span>
           </button>
 
           <button
@@ -361,10 +360,10 @@ export const Header: React.FC<HeaderProps> = ({
               sound.playClick();
               onOpenMissions();
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-900/80 hover:bg-indigo-800 text-xs font-bold text-amber-300 shadow-md transition-all border border-indigo-500/40 relative"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-medium text-slate-200 transition-colors relative"
           >
-            <Trophy className="w-4 h-4 text-amber-300" />
-            <span>Missions 🏆</span>
+            <Trophy className="w-4 h-4 text-amber-400" />
+            <span className="hidden md:inline">Missions</span>
             {state.nightsDrinksConsumed >= 1001 && (
               <span className="w-2 h-2 rounded-full bg-emerald-400 absolute -top-0.5 -right-0.5 animate-ping" />
             )}
@@ -375,10 +374,10 @@ export const Header: React.FC<HeaderProps> = ({
               sound.playClick();
               onOpenStore();
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-600 to-rose-600 hover:from-amber-500 hover:to-rose-500 text-xs font-bold text-white shadow-md shadow-amber-950/40 transition-all border border-amber-500/40"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-950/60 hover:bg-amber-900/70 border border-amber-500/30 text-xs font-bold text-amber-300 transition-colors"
           >
-            <ShoppingBag className="w-4 h-4 text-amber-200" />
-            <span>Store 🛒</span>
+            <ShoppingBag className="w-4 h-4 text-amber-400" />
+            <span className="hidden md:inline">Store</span>
           </button>
 
           <button
@@ -386,14 +385,13 @@ export const Header: React.FC<HeaderProps> = ({
               sound.playClick();
               onOpenMap();
             }}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium text-xs transition-colors shadow-sm ${
-              state.phase === 'hospital_exploration'
-                ? 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white'
-                : 'bg-indigo-600 hover:bg-indigo-500 text-white'
-            }`}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-medium text-slate-200 transition-colors relative"
           >
-            <Map className="w-4 h-4" />
-            <span>Map</span>
+            <Map className="w-4 h-4 text-cyan-400" />
+            <span className="hidden md:inline">Map</span>
+            {state.phase === 'hospital_exploration' && (
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 absolute -top-0.5 -right-0.5" />
+            )}
           </button>
 
           {/* Cheat Menu Button */}
@@ -402,11 +400,11 @@ export const Header: React.FC<HeaderProps> = ({
               sound.playClick();
               onOpenCheatMenu();
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-950/90 hover:bg-purple-900 text-purple-200 border border-purple-500/50 text-xs font-bold transition-all shadow-md shadow-purple-950/50 cursor-pointer"
-            title="Open Debug Cheat Menu"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700/70 border-dashed text-xs font-medium text-slate-400 hover:text-rose-300 transition-colors cursor-pointer"
+            title="Open Debug Cheat Menu (dev tool)"
           >
-            <Wrench className="w-3.5 h-3.5 text-purple-400 animate-pulse" />
-            <span>Cheats 🛠️</span>
+            <Wrench className="w-3.5 h-3.5" />
+            <span className="hidden lg:inline">Cheats</span>
           </button>
         </div>
 

@@ -332,7 +332,7 @@ export const TradeModal: React.FC<TradeModalProps> = ({
                                 : 'bg-slate-900 hover:bg-slate-850 border-slate-800 text-slate-300'
                             }`}
                           >
-                            <div className="flex items-center gap-2 truncate">
+                            <div className="flex items-center gap-2 truncate" title={item.name}>
                               <span className="text-base">{item.icon}</span>
                               <span className="font-semibold truncate">{item.name}</span>
                             </div>
@@ -481,7 +481,7 @@ export const TradeModal: React.FC<TradeModalProps> = ({
                               : 'bg-slate-900 hover:bg-slate-850 border-slate-800 text-slate-300'
                           }`}
                         >
-                          <div className="flex items-center gap-2 truncate">
+                          <div className="flex items-center gap-2 truncate" title={item.name}>
                             <span className="text-base">{item.icon}</span>
                             <span className="font-semibold truncate">{item.name}</span>
                           </div>
