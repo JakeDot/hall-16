@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Clock,
   Battery,
@@ -15,9 +15,12 @@ import {
   Award,
   Sparkles,
   ChevronRight,
-  Wrench
+  ChevronDown,
+  Wrench,
+  Users,
+  Handshake
 } from 'lucide-react';
-import { GameState, GamePhase, WEATHER_META } from '../types/game';
+import { GameState, GamePhase, WEATHER_META, RoleGroup, ROLE_GROUP_INFO } from '../types/game';
 import { sound } from '../utils/audio';
 
 interface HeaderProps {
@@ -33,7 +36,9 @@ interface HeaderProps {
   onOpenRoleModal: () => void;
   onOpenWeatherModal: () => void;
   onOpenCheatMenu: () => void;
+  onOpenTradeModal: () => void;
   onPlayerSelfCare: (type: 'water' | 'food' | 'med') => void;
+  onSwitchRole: (role: RoleGroup) => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -49,8 +54,14 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenRoleModal,
   onOpenWeatherModal,
   onOpenCheatMenu,
-  onPlayerSelfCare
+  onOpenTradeModal,
+  onPlayerSelfCare,
+  onSwitchRole
 }) => {
+  const [showRoleDropdown, setShowRoleDropdown] = useState(false);
+  const currentRole: RoleGroup = state.activeRole || 'nurse';
+  const roleMeta = ROLE_GROUP_INFO[currentRole];
+  const allRoles: RoleGroup[] = ['nurse', 'patient', 'doctor', 'cantina', 'janitor', 'director'];
   // Convert timeInMinutes (e.g. 480 = 08:00 AM)
   const totalMinutes = state.timeInMinutes % (24 * 60);
   const hours24 = Math.floor(totalMinutes / 60);
@@ -175,6 +186,70 @@ export const Header: React.FC<HeaderProps> = ({
             <span className="text-xs font-mono">6 Roles</span>
             <span className="text-[10px] bg-sky-500/30 text-sky-200 px-1.5 py-0.5 rounded font-semibold hidden lg:inline">EXP & Credits</span>
           </button>
+
+          {/* Inter-Role Trading System Button */}
+          <button
+            onClick={() => {
+              sound.playClick();
+              onOpenTradeModal();
+            }}
+            className="flex items-center gap-1.5 bg-gradient-to-r from-purple-950 via-indigo-950 to-slate-900 hover:from-purple-900 hover:to-indigo-900 text-emerald-300 px-2.5 py-1 rounded-lg border border-emerald-500/40 shadow-md transition-all font-bold group cursor-pointer"
+            title="Open Trading System: Trade items, favours, and credits between roles"
+          >
+            <Handshake className="w-3.5 h-3.5 text-emerald-400 group-hover:scale-110 transition-transform" />
+            <span className="text-xs font-bold">Trade 🤝</span>
+            <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded font-semibold hidden lg:inline">Items • Favours • Credits</span>
+          </button>
+
+          {/* Active Playable Role Switcher Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => {
+                sound.playClick();
+                setShowRoleDropdown(!showRoleDropdown);
+              }}
+              className="flex items-center gap-1.5 bg-gradient-to-r from-indigo-950 via-purple-950 to-slate-900 hover:from-indigo-900 hover:to-purple-900 text-purple-200 px-2.5 py-1 rounded-lg border border-purple-500/50 shadow-md transition-all font-bold cursor-pointer"
+              title="Click to swap active playable role during gameplay"
+            >
+              <span className="text-sm">{roleMeta?.icon || '👩‍⚕️'}</span>
+              <span className="text-xs font-bold">{roleMeta?.name.replace(' Department', '').replace(' Care', '') || 'Nurse'}</span>
+              <ChevronDown className="w-3.5 h-3.5 text-purple-400" />
+            </button>
+
+            {showRoleDropdown && (
+              <div className="absolute top-full left-0 mt-2 w-56 bg-slate-900 border border-purple-500/40 rounded-2xl shadow-2xl p-2 z-50 animate-in fade-in zoom-in duration-150 space-y-1">
+                <div className="px-2 py-1 text-[10px] uppercase font-extrabold tracking-wider text-purple-400 border-b border-slate-800 flex justify-between items-center">
+                  <span>Switch Playable Role</span>
+                  <span>6 Playable</span>
+                </div>
+                {allRoles.map(r => {
+                  const info = ROLE_GROUP_INFO[r];
+                  const isActive = r === currentRole;
+                  return (
+                    <button
+                      key={r}
+                      onClick={() => {
+                        sound.playClick();
+                        onSwitchRole(r);
+                        setShowRoleDropdown(false);
+                      }}
+                      className={`w-full flex items-center justify-between p-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                        isActive
+                          ? 'bg-purple-600 text-white shadow'
+                          : 'hover:bg-slate-800 text-slate-200'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span>{info.icon}</span>
+                        <span>{info.name}</span>
+                      </div>
+                      {isActive && <span className="text-[10px] bg-white/20 px-1.5 py-0.5 rounded font-mono font-bold">Active</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
 
           <span className="font-semibold text-slate-400 hidden sm:inline">Self Care:</span>
           

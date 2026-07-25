@@ -132,7 +132,8 @@ export interface DailyShiftGoal {
   id: string;
   title: string;
   description: string;
-  category: 'dialogue' | 'medication' | 'hydration' | 'food' | 'inventory' | 'appointments' | 'vitals';
+  category: 'dialogue' | 'medication' | 'hydration' | 'food' | 'inventory' | 'appointments' | 'vitals' | 'diagnostics' | 'catering' | 'sanitation' | 'executive';
+  roleGroup?: RoleGroup;
   currentProgress: number;
   targetGoal: number;
   completed: boolean;
@@ -387,5 +388,6 @@ export interface GameState {
   directorUnlocked: boolean;
   collectionMissions: CollectionMission[];
   achievements: Achievement[];
+  activeRole: RoleGroup;
   weather: WeatherState;
 }

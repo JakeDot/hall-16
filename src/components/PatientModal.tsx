@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Patient, Item } from '../types/game';
+import { Patient, Item, RoleGroup, ROLE_GROUP_INFO } from '../types/game';
 import { PatientVitalsChart } from './PatientVitalsChart';
 import {
   X,
@@ -20,6 +20,7 @@ import { sound } from '../utils/audio';
 interface PatientModalProps {
   patient: Patient;
   inventory: Item[];
+  activeRole?: RoleGroup;
   onClose: () => void;
   onAdministerMedication: (patientId: string) => void;
   onGiveWater: (patientId: string) => void;
@@ -29,6 +30,7 @@ interface PatientModalProps {
 export const PatientModal: React.FC<PatientModalProps> = ({
   patient,
   inventory,
+  activeRole = 'nurse',
   onClose,
   onAdministerMedication,
   onGiveWater,
@@ -77,6 +79,10 @@ export const PatientModal: React.FC<PatientModalProps> = ({
               Room {patient.roomNumber}
             </span>
             <h3 className="font-bold text-lg text-white">{patient.name}</h3>
+            <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-purple-950 text-purple-300 border border-purple-500/40 flex items-center gap-1">
+              <span>{ROLE_GROUP_INFO[activeRole]?.icon}</span>
+              <span className="hidden sm:inline">{ROLE_GROUP_INFO[activeRole]?.name}</span>
+            </span>
             {isFullyCareComplete && (
               <span className="flex items-center gap-1 text-[11px] font-semibold bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-500/30">
                 <CheckCircle2 className="w-3.5 h-3.5" />

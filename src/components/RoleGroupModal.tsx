@@ -1,15 +1,18 @@
 import React from 'react';
 import { GameState, ROLE_GROUP_INFO, RoleGroup } from '../types/game';
-import { ShieldCheck, Award, X, Sparkles, TrendingUp, Coins } from 'lucide-react';
+import { ShieldCheck, Award, X, Sparkles, TrendingUp, Coins, Handshake } from 'lucide-react';
 import { sound } from '../utils/audio';
 
 interface RoleGroupModalProps {
   state: GameState;
   onClose: () => void;
   onOpenStore: () => void;
+  onSwitchRole: (role: RoleGroup) => void;
+  onOpenTradeModal: () => void;
 }
 
-export const RoleGroupModal: React.FC<RoleGroupModalProps> = ({ state, onClose, onOpenStore }) => {
+export const RoleGroupModal: React.FC<RoleGroupModalProps> = ({ state, onClose, onOpenStore, onSwitchRole, onOpenTradeModal }) => {
+  const currentRole = state.activeRole || 'nurse';
   const roleProgress = state.roleProgress || {
     nurse: { xp: 120, level: 1, credits: 150 },
     patient: { xp: 100, level: 1, credits: 100 },
@@ -144,13 +147,40 @@ export const RoleGroupModal: React.FC<RoleGroupModalProps> = ({ state, onClose, 
                     </div>
                   </div>
 
-                  {/* Credits Footer */}
-                  <div className="pt-3 border-t border-slate-700/50 flex items-center justify-between text-xs">
-                    <span className="font-semibold text-slate-300">Department Credits:</span>
-                    <div className="flex items-center gap-1 bg-amber-950/90 border border-amber-500/50 px-2.5 py-1 rounded-lg text-amber-300 font-mono font-bold">
+                  {/* Credits & Switch Active Role Footer */}
+                  <div className="pt-3 border-t border-slate-700/50 flex items-center justify-between text-xs gap-2">
+                    <div className="flex items-center gap-1 bg-amber-950/90 border border-amber-500/50 px-2 py-1 rounded-lg text-amber-300 font-mono font-bold">
                       <span>🪙</span>
                       <span>{prog.credits}</span>
                       <span className="text-[10px] text-amber-400/80 font-normal">(${(prog.credits / 100).toFixed(2)})</span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => {
+                          sound.playClick();
+                          onOpenTradeModal();
+                        }}
+                        className="px-2.5 py-1.5 rounded-xl font-bold text-xs bg-emerald-900/80 hover:bg-emerald-800 text-emerald-200 border border-emerald-500/50 transition-all shadow-md cursor-pointer flex items-center gap-1"
+                        title="Trade items, favours, and credits with this department"
+                      >
+                        <Handshake className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Trade</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          sound.playClick();
+                          onSwitchRole(role);
+                        }}
+                        className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-all shadow-md cursor-pointer ${
+                          role === currentRole
+                            ? 'bg-purple-600 text-white border border-purple-400'
+                            : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700'
+                        }`}
+                      >
+                        {role === currentRole ? 'Active ✓' : 'Switch 🔄'}
+                      </button>
                     </div>
                   </div>
                 </div>

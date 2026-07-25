@@ -9,6 +9,7 @@ import {
   StoreItem,
   RoleGroup,
   RoleGroupProgress,
+  ROLE_GROUP_INFO,
   LOCATION_ROLE_MAP,
   WEATHER_META,
   WeatherCondition,
@@ -34,6 +35,7 @@ import { DailyShiftGoalsModal } from './components/DailyShiftGoalsModal';
 import { RoleGroupModal } from './components/RoleGroupModal';
 import { WeatherModal } from './components/WeatherModal';
 import { CheatMenuModal } from './components/CheatMenuModal';
+import { TradeModal } from './components/TradeModal';
 import { generateDailyShiftGoals } from './utils/goalGenerator';
 import { addCareVitalRecord, generateInitialPatientVitals } from './utils/vitalsGenerator';
 import { sound } from './utils/audio';
@@ -68,6 +70,7 @@ export default function App() {
       janitor: { xp: 50, level: 1, credits: 50 },
       director: { xp: 90, level: 1, credits: 50 }
     },
+    activeRole: 'nurse',
     dailyGoals: generateDailyShiftGoals(1),
     currentLocation: 'hall16_west',
     inventory: INITIAL_ITEMS,
@@ -165,6 +168,87 @@ export default function App() {
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
   const [isWeatherOpen, setIsWeatherOpen] = useState(false);
   const [isCheatMenuOpen, setIsCheatMenuOpen] = useState(false);
+  const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
+
+  // Execute Inter-Role Trade Deal
+  const handleExecuteTrade = (tradeData: {
+    fromRole: RoleGroup;
+    toRole: RoleGroup;
+    offeredItems: Item[];
+    offeredFavours: any[];
+    offeredCredits: number;
+    requestedItems: any[];
+    requestedFavours: any[];
+    requestedCredits: number;
+  }) => {
+    sound.playPillClink();
+
+    setState(prev => {
+      // 1. Calculate next inventory
+      const offeredItemIds = new Set(tradeData.offeredItems.map(i => i.id));
+      const remainingInventory = prev.inventory.filter(i => !offeredItemIds.has(i.id));
+
+      const newItemsFromTrade: Item[] = tradeData.requestedItems.map(item => ({
+        id: `trade_item_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+        name: item.name,
+        description: item.description,
+        icon: item.icon,
+        category: item.category
+      }));
+
+      const nextInventory = [...remainingInventory, ...newItemsFromTrade];
+
+      // 2. Favours effects
+      let bonusEnergy = 0;
+      let bonusHydration = 0;
+      let bonusXp = 50;
+      let bonusCreditsFromFavours = 0;
+
+      tradeData.requestedFavours.forEach(favour => {
+        if (favour.effect?.energyBonus) bonusEnergy += favour.effect.energyBonus;
+        if (favour.effect?.hydrationBonus) bonusHydration += favour.effect.hydrationBonus;
+        if (favour.effect?.xpBonus) bonusXp += favour.effect.xpBonus;
+        if (favour.effect?.creditsBonus) bonusCreditsFromFavours += favour.effect.creditsBonus;
+      });
+
+      // 3. Credits Net Change
+      const creditNetChange = tradeData.requestedCredits + bonusCreditsFromFavours - tradeData.offeredCredits;
+
+      const fromRole = tradeData.fromRole;
+      const currentRoleData = prev.roleProgress?.[fromRole] || { xp: 0, level: 1, credits: 100 };
+      const newRoleXp = currentRoleData.xp + bonusXp;
+      const newRoleLevel = Math.floor(newRoleXp / 200) + 1;
+      const newRoleCredits = Math.max(0, currentRoleData.credits + creditNetChange);
+
+      const updatedRoleProgress = {
+        ...prev.roleProgress,
+        [fromRole]: {
+          xp: newRoleXp,
+          level: newRoleLevel,
+          credits: newRoleCredits
+        }
+      };
+
+      const newTotalCredits = Object.values(updatedRoleProgress).reduce((acc, r) => acc + (r.credits || 0), 0);
+
+      return {
+        ...prev,
+        inventory: nextInventory,
+        playerVitals: {
+          ...prev.playerVitals,
+          energy: Math.min(100, prev.playerVitals.energy + bonusEnergy),
+          hydration: Math.min(100, prev.playerVitals.hydration + bonusHydration)
+        },
+        nurseCredits: newTotalCredits,
+        roleProgress: updatedRoleProgress
+      };
+    });
+
+    const fromMeta = ROLE_GROUP_INFO[tradeData.fromRole];
+    const toMeta = ROLE_GROUP_INFO[tradeData.toRole];
+
+    addLog(`🤝 TRADE EXECUTED: ${fromMeta.name} traded with ${toMeta.name}! Items, favours & credits updated (+50 Trade XP).`, 'success');
+  };
 
   // Helper to add log
   const addLog = (text: string, type: 'info' | 'success' | 'alert' = 'info') => {
@@ -465,24 +549,32 @@ export default function App() {
   };
 
   // Helper to update procedural daily shift goal progress and award XP / achievements / credits to specific role group
-  const updateGoalProgress = (category: 'dialogue' | 'medication' | 'hydration' | 'food' | 'inventory' | 'appointments' | 'vitals', increment: number = 1) => {
+  const updateGoalProgress = (
+    category: 'dialogue' | 'medication' | 'hydration' | 'food' | 'inventory' | 'appointments' | 'vitals' | 'diagnostics' | 'catering' | 'sanitation' | 'executive',
+    increment: number = 1
+  ) => {
     const roleMap: Record<string, RoleGroup> = {
       medication: 'nurse',
       vitals: 'nurse',
-      hydration: 'patient',
+      hydration: 'cantina',
       food: 'patient',
       dialogue: 'patient',
       appointments: 'doctor',
-      inventory: 'janitor'
+      diagnostics: 'doctor',
+      catering: 'cantina',
+      sanitation: 'janitor',
+      inventory: 'janitor',
+      executive: 'director'
     };
-    const role: RoleGroup = roleMap[category] || 'nurse';
 
     setState(prev => {
       let gainedXp = 15;
       let gainedCredits = 15;
+      let targetRole: RoleGroup = roleMap[category] || 'nurse';
 
       const updatedGoals = prev.dailyGoals.map(goal => {
         if (goal.category === category && !goal.completed) {
+          if (goal.roleGroup) targetRole = goal.roleGroup;
           const nextProgress = goal.category === 'inventory'
             ? Math.max(goal.currentProgress, increment)
             : goal.currentProgress + increment;
@@ -490,7 +582,7 @@ export default function App() {
 
           if (isCompleted) {
             gainedXp += goal.rewardXp;
-            gainedCredits += 50; // +50 Nurse Credits for completing goal
+            gainedCredits += 50;
           }
 
           return {
@@ -502,6 +594,7 @@ export default function App() {
         return goal;
       });
 
+      const role = targetRole;
       const currentRoleData = prev.roleProgress?.[role] || { xp: 0, level: 1, credits: 0 };
       const newRoleXp = currentRoleData.xp + gainedXp;
       const newRoleLevel = Math.floor(newRoleXp / 200) + 1;
@@ -535,6 +628,103 @@ export default function App() {
 
       return checkAchievementUnlocks(updatedState);
     });
+  };
+
+  // Switch Active Playable Role
+  const handleSwitchRole = (newRole: RoleGroup) => {
+    sound.playClick();
+    const info = ROLE_GROUP_INFO[newRole];
+    setState(prev => ({
+      ...prev,
+      activeRole: newRole
+    }));
+    addLog(`🎮 ACTIVE ROLE SWAPPED: You are now playing as ${info.name} (${info.icon}). Role duties & missions active!`, 'success');
+  };
+
+  // Perform Playable Role Actions
+  const handlePerformRoleAction = (role: RoleGroup, actionType: string) => {
+    sound.playClick();
+    if (role === 'patient') {
+      if (actionType === 'request_meds') {
+        sound.playPillClink();
+        updateGoalProgress('medication', 1);
+        addLog('❤️ PATIENT ACTION: Requested Rx medication. Administered medication dose for recovery!', 'success');
+      } else if (actionType === 'request_water') {
+        sound.playWaterPour();
+        updateGoalProgress('hydration', 1);
+        setState(prev => ({
+          ...prev,
+          playerVitals: { ...prev.playerVitals, hydration: Math.min(100, prev.playerVitals.hydration + 25) }
+        }));
+        addLog('❤️ PATIENT ACTION: Drank fresh hydration water! (+25 Hydration)', 'success');
+      } else if (actionType === 'request_food') {
+        updateGoalProgress('food', 1);
+        setState(prev => ({
+          ...prev,
+          playerVitals: { ...prev.playerVitals, energy: Math.min(100, prev.playerVitals.energy + 25) }
+        }));
+        addLog('❤️ PATIENT ACTION: Enjoyed a hot dietary meal! (+25 Energy)', 'success');
+      } else if (actionType === 'rest') {
+        setState(prev => ({
+          ...prev,
+          playerVitals: { ...prev.playerVitals, energy: Math.min(100, prev.playerVitals.energy + 20) }
+        }));
+        addLog('❤️ PATIENT ACTION: Rested peacefully in ward bed. Recovered +20 Energy.', 'info');
+      } else if (actionType === 'talk') {
+        updateGoalProgress('dialogue', 1);
+        addLog('❤️ PATIENT ACTION: Shared recovery experiences with ward companions! (+20 Patient XP)', 'success');
+      } else if (actionType === 'walk') {
+        updateGoalProgress('vitals', 1);
+        addLog('❤️ PATIENT ACTION: Took a relaxing walk through the Hospital Park & Garden.', 'info');
+      } else if (actionType === 'survey') {
+        updateGoalProgress('vitals', 1);
+        addLog('❤️ PATIENT ACTION: Completed Patient Satisfaction & Care Feedback Survey! (+25 Patient XP, +25 Credits)', 'success');
+      }
+    } else if (role === 'doctor') {
+      if (actionType === 'diagnostics') {
+        updateGoalProgress('diagnostics', 1);
+        addLog('👨‍⚕️ DOCTOR ACTION: Performed MRI/CT Diagnostic Scan on patient chart.', 'success');
+      } else if (actionType === 'consult') {
+        updateGoalProgress('appointments', 1);
+        addLog('👨‍⚕️ DOCTOR ACTION: Consulted with Dr. Vance in the research lab.', 'success');
+      } else if (actionType === 'charts') {
+        updateGoalProgress('vitals', 1);
+        addLog('👨‍⚕️ DOCTOR ACTION: Reviewed and updated patient medical charts.', 'info');
+      }
+    } else if (role === 'cantina') {
+      if (actionType === 'coffee') {
+        updateGoalProgress('catering', 1);
+        addLog('☕ CANTINA ACTION: Brewed fresh espresso coffee for ward medical staff.', 'success');
+      } else if (actionType === 'smoothie') {
+        updateGoalProgress('hydration', 1);
+        addLog('☕ CANTINA ACTION: Blended vitamin smoothies for hospital lounge.', 'success');
+      } else if (actionType === 'catering') {
+        updateGoalProgress('food', 1);
+        addLog('☕ CANTINA ACTION: Delivered hot dietary meal trays to ward tables.', 'success');
+      }
+    } else if (role === 'janitor') {
+      if (actionType === 'mop') {
+        updateGoalProgress('sanitation', 1);
+        addLog('🧹 JANITOR ACTION: Mopped hallway spills and sanitized ward floors.', 'success');
+      } else if (actionType === 'waste') {
+        updateGoalProgress('sanitation', 1);
+        addLog('🧹 JANITOR ACTION: Processed and sterilized medical biohazard waste.', 'success');
+      } else if (actionType === 'restock') {
+        updateGoalProgress('inventory', 1);
+        addLog('🧹 JANITOR ACTION: Restocked supply trolleys at the Nurse Station.', 'success');
+      }
+    } else if (role === 'director') {
+      if (actionType === 'walkthrough') {
+        updateGoalProgress('executive', 1);
+        addLog('🏢 DIRECTOR ACTION: Conducted executive walkthrough of ER & Boardroom.', 'success');
+      } else if (actionType === 'audit') {
+        updateGoalProgress('executive', 1);
+        addLog('🏢 DIRECTOR ACTION: Audited hospital care quality & efficiency scores.', 'success');
+      } else if (actionType === 'bonus') {
+        updateGoalProgress('executive', 1);
+        addLog('🏢 DIRECTOR ACTION: Awarded performance bonus to shift staff!', 'success');
+      }
+    }
   };
 
   const getFormattedGameTime = (timeInMinutes: number) => {
@@ -967,7 +1157,9 @@ export default function App() {
         onOpenRoleModal={() => setIsRoleModalOpen(true)}
         onOpenWeatherModal={() => setIsWeatherOpen(true)}
         onOpenCheatMenu={() => setIsCheatMenuOpen(true)}
+        onOpenTradeModal={() => setIsTradeModalOpen(true)}
         onPlayerSelfCare={handlePlayerSelfCare}
+        onSwitchRole={handleSwitchRole}
       />
 
       {/* Main Game Container */}
@@ -988,6 +1180,9 @@ export default function App() {
           }}
           onOpenAppointments={() => setIsScheduleOpen(true)}
           onInteractStationService={handleStationService}
+          onSwitchRole={handleSwitchRole}
+          onPerformRoleAction={handlePerformRoleAction}
+          onOpenTradeModal={() => setIsTradeModalOpen(true)}
         />
 
         {/* Log Activity Bar */}
@@ -1024,6 +1219,7 @@ export default function App() {
         <PatientModal
           patient={state.activePatientModal}
           inventory={state.inventory}
+          activeRole={state.activeRole}
           onClose={() => setState(prev => ({ ...prev, activePatientModal: null }))}
           onAdministerMedication={handleAdministerMedication}
           onGiveWater={handleGiveWater}
@@ -1135,6 +1331,23 @@ export default function App() {
             setIsRoleModalOpen(false);
             setIsStoreOpen(true);
           }}
+          onSwitchRole={(role) => {
+            handleSwitchRole(role);
+            setIsRoleModalOpen(false);
+          }}
+          onOpenTradeModal={() => {
+            setIsRoleModalOpen(false);
+            setIsTradeModalOpen(true);
+          }}
+        />
+      )}
+
+      {/* Inter-Role Trading System Modal */}
+      {isTradeModalOpen && (
+        <TradeModal
+          state={state}
+          onClose={() => setIsTradeModalOpen(false)}
+          onExecuteTrade={handleExecuteTrade}
         />
       )}
 

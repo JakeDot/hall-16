@@ -4,7 +4,9 @@ import {
   Patient,
   GameState,
   Item,
-  WEATHER_META
+  WEATHER_META,
+  RoleGroup,
+  ROLE_GROUP_INFO
 } from '../types/game';
 import { LOCATIONS_META } from '../data/gameData';
 import {
@@ -22,7 +24,17 @@ import {
   Eye,
   CheckCircle2,
   Calendar,
-  AlertCircle
+  AlertCircle,
+  Coffee,
+  Wrench,
+  Briefcase,
+  Heart,
+  MessageSquare,
+  Smile,
+  FileText,
+  Activity,
+  Award,
+  Handshake
 } from 'lucide-react';
 import { sound } from '../utils/audio';
 
@@ -34,6 +46,9 @@ interface SceneViewProps {
   onTakeItemFromScene: (item: Item) => void;
   onOpenAppointments: () => void;
   onInteractStationService: (type: 'pill_refill' | 'water_fill' | 'meal_restock') => void;
+  onSwitchRole: (role: RoleGroup) => void;
+  onPerformRoleAction: (role: RoleGroup, actionType: string) => void;
+  onOpenTradeModal: () => void;
 }
 
 export const SceneView: React.FC<SceneViewProps> = ({
@@ -43,7 +58,10 @@ export const SceneView: React.FC<SceneViewProps> = ({
   onNavigateLocation,
   onTakeItemFromScene,
   onOpenAppointments,
-  onInteractStationService
+  onInteractStationService,
+  onSwitchRole,
+  onPerformRoleAction,
+  onOpenTradeModal
 }) => {
   const meta = LOCATIONS_META[state.currentLocation];
   const [hoveredHotspot, setHoveredHotspot] = useState<string | null>(null);
@@ -127,8 +145,364 @@ export const SceneView: React.FC<SceneViewProps> = ({
         </div>
       </div>
 
+      {/* Playable Role Selector & Quick Switch Bar */}
+      <div className="bg-slate-900/90 border-b border-slate-800 px-5 py-2.5 flex flex-wrap items-center justify-between text-xs gap-3">
+        <div className="flex items-center gap-2 overflow-x-auto py-0.5 max-w-full">
+          <span className="text-[11px] font-extrabold uppercase tracking-wider text-purple-400 shrink-0 flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+            <span>Playable Role:</span>
+          </span>
+          {(['nurse', 'patient', 'doctor', 'cantina', 'janitor', 'director'] as RoleGroup[]).map(r => {
+            const rInfo = ROLE_GROUP_INFO[r];
+            const isActive = (state.activeRole || 'nurse') === r;
+            return (
+              <button
+                key={r}
+                onClick={() => {
+                  sound.playClick();
+                  onSwitchRole(r);
+                }}
+                className={`px-3 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shrink-0 ${
+                  isActive
+                    ? 'bg-purple-600 text-white shadow-lg shadow-purple-950/50 ring-2 ring-purple-400'
+                    : 'bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700/60'
+                }`}
+                title={`Switch active playable role to ${rInfo.name}`}
+              >
+                <span>{rInfo.icon}</span>
+                <span>{rInfo.name.replace(' Department', '').replace(' Care', '')}</span>
+                {isActive && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={() => {
+              sound.playClick();
+              onOpenTradeModal();
+            }}
+            className="px-3 py-1 rounded-xl text-xs font-bold bg-gradient-to-r from-emerald-950 via-teal-950 to-slate-900 hover:from-emerald-900 hover:to-teal-900 text-emerald-300 border border-emerald-500/50 flex items-center gap-1.5 transition-all cursor-pointer shadow-md"
+            title="Open Trading System: Trade items, favours, and credits between roles"
+          >
+            <Handshake className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Role Trade 🤝</span>
+          </button>
+
+          <div className="text-[11px] font-mono text-purple-300 flex items-center gap-1.5 shrink-0 bg-slate-950 px-2.5 py-1 rounded-lg border border-purple-800/40">
+            <span className="text-slate-400">Active Role:</span>
+            <span className="font-bold text-white">
+              {ROLE_GROUP_INFO[state.activeRole || 'nurse']?.name}
+            </span>
+            <span className="text-[10px] bg-purple-500/30 text-purple-200 px-1.5 py-0.2 rounded font-bold">
+              Lvl {state.roleProgress?.[state.activeRole || 'nurse']?.level || 1}
+            </span>
+          </div>
+        </div>
+      </div>
+
       {/* Main Interactive Scene Canvas Container */}
       <div className="relative flex-1 bg-gradient-to-b from-slate-900 via-slate-950 to-black p-6 flex flex-col justify-between overflow-hidden select-none">
+        
+        {/* Dynamic Role Duty Action Bar */}
+        {(() => {
+          const currentRole = state.activeRole || 'nurse';
+          
+          if (currentRole === 'patient') {
+            return (
+              <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-rose-950/80 via-slate-900 to-indigo-950/80 border border-rose-500/40 space-y-3 shadow-xl">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">❤️</span>
+                    <div>
+                      <h3 className="font-extrabold text-sm text-white flex items-center gap-2">
+                        <span>Patient Self-Care & Recovery Hub</span>
+                        <span className="text-[10px] bg-rose-500/30 text-rose-200 border border-rose-400/30 px-2 py-0.5 rounded-full uppercase tracking-wider font-bold">
+                          Active Playable Patient
+                        </span>
+                      </h3>
+                      <p className="text-xs text-slate-300">
+                        As a patient, complete your recovery duties, manage vitals, and interact with ward companions to earn Patient EXP!
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-xs font-mono font-bold text-rose-300 bg-rose-950/90 px-3 py-1 rounded-xl border border-rose-500/30">
+                    Patient EXP: {state.roleProgress?.patient?.xp || 0} XP (Lvl {state.roleProgress?.patient?.level || 1})
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2 pt-1 text-xs">
+                  <button
+                    onClick={() => onPerformRoleAction('patient', 'request_meds')}
+                    className="p-2.5 rounded-xl bg-indigo-900/80 hover:bg-indigo-800 border border-indigo-500/50 text-white font-semibold flex flex-col items-center justify-center text-center gap-1 transition-all cursor-pointer shadow hover:scale-105"
+                  >
+                    <Pill className="w-4 h-4 text-indigo-300" />
+                    <span>Request Rx Meds</span>
+                  </button>
+
+                  <button
+                    onClick={() => onPerformRoleAction('patient', 'request_water')}
+                    className="p-2.5 rounded-xl bg-cyan-900/80 hover:bg-cyan-800 border border-cyan-500/50 text-white font-semibold flex flex-col items-center justify-center text-center gap-1 transition-all cursor-pointer shadow hover:scale-105"
+                  >
+                    <Droplet className="w-4 h-4 text-cyan-300" />
+                    <span>Drink Hydration</span>
+                  </button>
+
+                  <button
+                    onClick={() => onPerformRoleAction('patient', 'request_food')}
+                    className="p-2.5 rounded-xl bg-amber-900/80 hover:bg-amber-800 border border-amber-500/50 text-white font-semibold flex flex-col items-center justify-center text-center gap-1 transition-all cursor-pointer shadow hover:scale-105"
+                  >
+                    <Utensils className="w-4 h-4 text-amber-300" />
+                    <span>Eat Dietary Meal</span>
+                  </button>
+
+                  <button
+                    onClick={() => onPerformRoleAction('patient', 'rest')}
+                    className="p-2.5 rounded-xl bg-emerald-900/80 hover:bg-emerald-800 border border-emerald-500/50 text-white font-semibold flex flex-col items-center justify-center text-center gap-1 transition-all cursor-pointer shadow hover:scale-105"
+                  >
+                    <Heart className="w-4 h-4 text-emerald-300" />
+                    <span>Rest in Bed (+20 E)</span>
+                  </button>
+
+                  <button
+                    onClick={() => onPerformRoleAction('patient', 'talk')}
+                    className="p-2.5 rounded-xl bg-purple-900/80 hover:bg-purple-800 border border-purple-500/50 text-white font-semibold flex flex-col items-center justify-center text-center gap-1 transition-all cursor-pointer shadow hover:scale-105"
+                  >
+                    <MessageSquare className="w-4 h-4 text-purple-300" />
+                    <span>Patient Dialogue</span>
+                  </button>
+
+                  <button
+                    onClick={() => onPerformRoleAction('patient', 'walk')}
+                    className="p-2.5 rounded-xl bg-teal-900/80 hover:bg-teal-800 border border-teal-500/50 text-white font-semibold flex flex-col items-center justify-center text-center gap-1 transition-all cursor-pointer shadow hover:scale-105"
+                  >
+                    <Smile className="w-4 h-4 text-teal-300" />
+                    <span>Garden Walk</span>
+                  </button>
+
+                  <button
+                    onClick={() => onPerformRoleAction('patient', 'survey')}
+                    className="p-2.5 rounded-xl bg-rose-900/80 hover:bg-rose-800 border border-rose-500/50 text-white font-semibold flex flex-col items-center justify-center text-center gap-1 transition-all cursor-pointer shadow hover:scale-105"
+                  >
+                    <FileText className="w-4 h-4 text-rose-300" />
+                    <span>Fill Care Survey</span>
+                  </button>
+                </div>
+              </div>
+            );
+          }
+
+          if (currentRole === 'doctor') {
+            return (
+              <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-indigo-950/80 via-slate-900 to-sky-950/80 border border-indigo-500/40 space-y-3 shadow-xl">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">👨‍⚕️</span>
+                    <div>
+                      <h3 className="font-extrabold text-sm text-white flex items-center gap-2">
+                        <span>Doctor Operations & Medical Diagnostics</span>
+                        <span className="text-[10px] bg-indigo-500/30 text-indigo-200 border border-indigo-400/30 px-2 py-0.5 rounded-full uppercase tracking-wider font-bold">
+                          Active Playable Doctor
+                        </span>
+                      </h3>
+                      <p className="text-xs text-slate-300">
+                        Review patient charts, perform radiology scans, and consult with Dr. Vance to earn Doctor EXP!
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-xs font-mono font-bold text-indigo-300 bg-indigo-950/90 px-3 py-1 rounded-xl border border-indigo-500/30">
+                    Doctor EXP: {state.roleProgress?.doctor?.xp || 0} XP (Lvl {state.roleProgress?.doctor?.level || 1})
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 text-xs">
+                  <button
+                    onClick={() => onPerformRoleAction('doctor', 'diagnostics')}
+                    className="p-3 rounded-xl bg-indigo-900/80 hover:bg-indigo-800 border border-indigo-500/50 text-white font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer shadow hover:scale-102"
+                  >
+                    <Stethoscope className="w-4 h-4 text-cyan-300" />
+                    <span>Perform MRI / CT Diagnostic Scan (+30 XP)</span>
+                  </button>
+
+                  <button
+                    onClick={() => onPerformRoleAction('doctor', 'consult')}
+                    className="p-3 rounded-xl bg-sky-900/80 hover:bg-sky-800 border border-sky-500/50 text-white font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer shadow hover:scale-102"
+                  >
+                    <Activity className="w-4 h-4 text-sky-300" />
+                    <span>Consult Dr. Vance in Lab (+30 XP)</span>
+                  </button>
+
+                  <button
+                    onClick={() => onPerformRoleAction('doctor', 'charts')}
+                    className="p-3 rounded-xl bg-purple-900/80 hover:bg-purple-800 border border-purple-500/50 text-white font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer shadow hover:scale-102"
+                  >
+                    <FileText className="w-4 h-4 text-purple-300" />
+                    <span>Audit Patient Medical Charts (+20 XP)</span>
+                  </button>
+                </div>
+              </div>
+            );
+          }
+
+          if (currentRole === 'cantina') {
+            return (
+              <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-amber-950/80 via-slate-900 to-orange-950/80 border border-amber-500/40 space-y-3 shadow-xl">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">☕</span>
+                    <div>
+                      <h3 className="font-extrabold text-sm text-white flex items-center gap-2">
+                        <span>Cantina & Ward Catering Operations</span>
+                        <span className="text-[10px] bg-amber-500/30 text-amber-200 border border-amber-400/30 px-2 py-0.5 rounded-full uppercase tracking-wider font-bold">
+                          Active Playable Cantina Chef
+                        </span>
+                      </h3>
+                      <p className="text-xs text-slate-300">
+                        Brew espresso coffee, blend smoothies, and distribute catering trays to earn Cantina EXP!
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-xs font-mono font-bold text-amber-300 bg-amber-950/90 px-3 py-1 rounded-xl border border-amber-500/30">
+                    Cantina EXP: {state.roleProgress?.cantina?.xp || 0} XP (Lvl {state.roleProgress?.cantina?.level || 1})
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 text-xs">
+                  <button
+                    onClick={() => onPerformRoleAction('cantina', 'coffee')}
+                    className="p-3 rounded-xl bg-amber-900/80 hover:bg-amber-800 border border-amber-500/50 text-white font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer shadow hover:scale-102"
+                  >
+                    <Coffee className="w-4 h-4 text-amber-300" />
+                    <span>Brew Espresso for Ward Staff (+25 XP)</span>
+                  </button>
+
+                  <button
+                    onClick={() => onPerformRoleAction('cantina', 'smoothie')}
+                    className="p-3 rounded-xl bg-orange-900/80 hover:bg-orange-800 border border-orange-500/50 text-white font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer shadow hover:scale-102"
+                  >
+                    <Droplet className="w-4 h-4 text-orange-300" />
+                    <span>Blend Vitamin Smoothie (+25 XP)</span>
+                  </button>
+
+                  <button
+                    onClick={() => onPerformRoleAction('cantina', 'catering')}
+                    className="p-3 rounded-xl bg-emerald-900/80 hover:bg-emerald-800 border border-emerald-500/50 text-white font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer shadow hover:scale-102"
+                  >
+                    <Utensils className="w-4 h-4 text-emerald-300" />
+                    <span>Deliver Ward Catering Trays (+20 XP)</span>
+                  </button>
+                </div>
+              </div>
+            );
+          }
+
+          if (currentRole === 'janitor') {
+            return (
+              <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-emerald-950/80 via-slate-900 to-teal-950/80 border border-emerald-500/40 space-y-3 shadow-xl">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">🧹</span>
+                    <div>
+                      <h3 className="font-extrabold text-sm text-white flex items-center gap-2">
+                        <span>Sanitation & Facility Maintenance Duties</span>
+                        <span className="text-[10px] bg-emerald-500/30 text-emerald-200 border border-emerald-400/30 px-2 py-0.5 rounded-full uppercase tracking-wider font-bold">
+                          Active Playable Janitor
+                        </span>
+                      </h3>
+                      <p className="text-xs text-slate-300">
+                        Mop floor spills, sterilize biohazard waste, and restock supply carts to earn Janitor EXP!
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-xs font-mono font-bold text-emerald-300 bg-emerald-950/90 px-3 py-1 rounded-xl border border-emerald-500/30">
+                    Janitor EXP: {state.roleProgress?.janitor?.xp || 0} XP (Lvl {state.roleProgress?.janitor?.level || 1})
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 text-xs">
+                  <button
+                    onClick={() => onPerformRoleAction('janitor', 'mop')}
+                    className="p-3 rounded-xl bg-emerald-900/80 hover:bg-emerald-800 border border-emerald-500/50 text-white font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer shadow hover:scale-102"
+                  >
+                    <Wrench className="w-4 h-4 text-emerald-300" />
+                    <span>Mop Ward Spills & Clean Floors (+20 XP)</span>
+                  </button>
+
+                  <button
+                    onClick={() => onPerformRoleAction('janitor', 'waste')}
+                    className="p-3 rounded-xl bg-teal-900/80 hover:bg-teal-800 border border-teal-500/50 text-white font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer shadow hover:scale-102"
+                  >
+                    <AlertCircle className="w-4 h-4 text-teal-300" />
+                    <span>Sterilize Biohazard Waste (+25 XP)</span>
+                  </button>
+
+                  <button
+                    onClick={() => onPerformRoleAction('janitor', 'restock')}
+                    className="p-3 rounded-xl bg-cyan-900/80 hover:bg-cyan-800 border border-cyan-500/50 text-white font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer shadow hover:scale-102"
+                  >
+                    <Pill className="w-4 h-4 text-cyan-300" />
+                    <span>Restock Nurse Station Trolleys (+20 XP)</span>
+                  </button>
+                </div>
+              </div>
+            );
+          }
+
+          if (currentRole === 'director') {
+            return (
+              <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-purple-950/80 via-slate-900 to-slate-900 border border-purple-500/40 space-y-3 shadow-xl">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">🏢</span>
+                    <div>
+                      <h3 className="font-extrabold text-sm text-white flex items-center gap-2">
+                        <span>Hospital Director Executive Leadership</span>
+                        <span className="text-[10px] bg-purple-500/30 text-purple-200 border border-purple-400/30 px-2 py-0.5 rounded-full uppercase tracking-wider font-bold">
+                          Active Playable Director
+                        </span>
+                      </h3>
+                      <p className="text-xs text-slate-300">
+                        Conduct executive wing walkthroughs, audit care quality, and manage department budgets to earn Director EXP!
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-xs font-mono font-bold text-purple-300 bg-purple-950/90 px-3 py-1 rounded-xl border border-purple-500/30">
+                    Director EXP: {state.roleProgress?.director?.xp || 0} XP (Lvl {state.roleProgress?.director?.level || 1})
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 text-xs">
+                  <button
+                    onClick={() => onPerformRoleAction('director', 'walkthrough')}
+                    className="p-3 rounded-xl bg-purple-900/80 hover:bg-purple-800 border border-purple-500/50 text-white font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer shadow hover:scale-102"
+                  >
+                    <Briefcase className="w-4 h-4 text-purple-300" />
+                    <span>Executive Wing Walkthrough (+30 XP)</span>
+                  </button>
+
+                  <button
+                    onClick={() => onPerformRoleAction('director', 'audit')}
+                    className="p-3 rounded-xl bg-indigo-900/80 hover:bg-indigo-800 border border-indigo-500/50 text-white font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer shadow hover:scale-102"
+                  >
+                    <Award className="w-4 h-4 text-indigo-300" />
+                    <span>Audit Ward Care Quality Score (+25 XP)</span>
+                  </button>
+
+                  <button
+                    onClick={() => onPerformRoleAction('director', 'bonus')}
+                    className="p-3 rounded-xl bg-amber-900/80 hover:bg-amber-800 border border-amber-500/50 text-white font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer shadow hover:scale-102"
+                  >
+                    <Sparkles className="w-4 h-4 text-amber-300" />
+                    <span>Award Staff Performance Bonus (+30 XP)</span>
+                  </button>
+                </div>
+              </div>
+            );
+          }
+
+          return null;
+        })()}
         
         {/* SCENE 1: Hall 16 West Ward (Rooms 101-105) */}
         {state.currentLocation === 'hall16_west' && (
