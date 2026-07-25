@@ -12,7 +12,7 @@ import {
   CheckCircle2
 } from 'lucide-react';
 import { GameState, LocationId, WeatherCondition, Item, RoleGroup } from '../types/game';
-import { LOCATIONS_META } from '../data/gameData';
+import { LOCATIONS_META, RANDOM_EVENTS } from '../data/gameData';
 import { sound } from '../utils/audio';
 
 interface CheatMenuModalProps {
@@ -232,6 +232,38 @@ export const CheatMenuModal: React.FC<CheatMenuModalProps> = ({
       }
     }));
     showFeedback(`🌦️ Weather changed to ${cond.toUpperCase()}!`);
+  };
+
+  const handleTriggerRandomEvent = () => {
+    sound.playSuccess();
+    const evt = RANDOM_EVENTS[Math.floor(Math.random() * RANDOM_EVENTS.length)];
+
+    onUpdateState(prev => {
+      const role = evt.effect.xpRole;
+      const current = prev.roleProgress[role] || { xp: 0, level: 1, credits: 0 };
+      const newXp = current.xp + evt.effect.xpAmount;
+      const newLevel = Math.floor(newXp / 200) + 1;
+      const addedCredits = evt.effect.nurseCredits || 0;
+
+      const updatedRoleProgress = {
+        ...prev.roleProgress,
+        [role]: { xp: newXp, level: newLevel, credits: current.credits + addedCredits }
+      };
+
+      return checkAchievementsInState({
+        ...prev,
+        roleProgress: updatedRoleProgress,
+        nurseCredits: Object.values(updatedRoleProgress).reduce((acc, r) => acc + (r.credits || 0), 0),
+        activeRandomEvent: evt,
+        randomEventsTriggeredCount: (prev.randomEventsTriggeredCount || 0) + 1,
+        playerVitals: {
+          ...prev.playerVitals,
+          energy: Math.max(10, Math.min(100, prev.playerVitals.energy + (evt.effect.energy || 0))),
+          hydration: Math.max(10, Math.min(100, prev.playerVitals.hydration + (evt.effect.hydration || 0)))
+        }
+      });
+    });
+    showFeedback(`${evt.icon} Triggered shift event: ${evt.title}!`);
   };
 
   const handleSetCounter = (type: 'nights' | 'storm' | 'pills' | 'drinking', value: number) => {
@@ -530,6 +562,23 @@ export const CheatMenuModal: React.FC<CheatMenuModalProps> = ({
                     </button>
                   ))}
                 </div>
+              </div>
+
+              <div className="space-y-2 pt-2 border-t border-slate-800">
+                <h3 className="font-bold text-sm text-emerald-300 flex items-center gap-2">
+                  <Zap className="w-4 h-4" />
+                  <span>Random Shift Events</span>
+                </h3>
+                <button
+                  onClick={handleTriggerRandomEvent}
+                  className="w-full p-3 bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded-xl text-xs font-bold text-slate-200 text-left flex items-center justify-between cursor-pointer"
+                >
+                  <span className="flex items-center gap-2">
+                    <span>🎲</span>
+                    <span>Trigger Random Shift Event</span>
+                  </span>
+                  <span className="text-[10px] text-slate-500 font-mono">{state.randomEventsTriggeredCount || 0} so far</span>
+                </button>
               </div>
             </div>
           )}

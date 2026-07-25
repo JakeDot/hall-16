@@ -1,4 +1,4 @@
-import { Patient, Item, Appointment, LocationId } from '../types/game';
+import { Patient, Item, Appointment, LocationId, RandomEventDef } from '../types/game';
 
 export const INITIAL_PATIENTS: Patient[] = [
   {
@@ -737,3 +737,87 @@ export const LOCATIONS_META: Record<LocationId, {
     description: 'A charming traditional German restaurant & biergarten adjacent to hospital grounds. Famous for crisp Apple Strudel, Wiener Schnitzel, and fresh Apple Cider. Inaccessible to patients without an Outside Pass!'
   }
 };
+
+// Random shift events that can fire while time advances - flavor moments with a small gameplay effect.
+export const RANDOM_EVENTS: RandomEventDef[] = [
+  {
+    id: 'guest_family_visit',
+    title: 'Family Visiting Hours',
+    icon: '👨‍👩‍👧',
+    category: 'social',
+    description: 'A family arrives with flowers and warm wishes to visit their loved one in Hall 16, lifting spirits across the ward.',
+    effectText: '❤️ +60 Patient XP | ⚡ +10 Energy',
+    effect: { xpRole: 'patient', xpAmount: 60, energy: 10 },
+    weight: 2
+  },
+  {
+    id: 'therapy_dog_visit',
+    title: 'Therapy Dog Visit',
+    icon: '🐕',
+    category: 'social',
+    description: 'A certified therapy dog and its handler make rounds through the ward, and patients light up at the visit.',
+    effectText: '❤️ +50 Patient XP | 🥤 +5 Hydration | ⚡ +15 Energy',
+    effect: { xpRole: 'patient', xpAmount: 50, energy: 15, hydration: 5 },
+    weight: 2
+  },
+  {
+    id: 'surprise_inspection',
+    title: 'Surprise Health Inspection',
+    icon: '📋',
+    category: 'inspection',
+    description: 'A state health inspector arrives unannounced to review ward compliance, keeping the director on their toes.',
+    effectText: '🏢 +60 Director XP | ⚡ -10 Energy',
+    effect: { xpRole: 'director', xpAmount: 60, energy: -10 },
+    weight: 1
+  },
+  {
+    id: 'news_crew_feature',
+    title: 'Local News Crew Feature',
+    icon: '🎥',
+    category: 'celebrity',
+    description: 'A local news crew films a feel-good segment about the hospital, boosting community goodwill and donations.',
+    effectText: '🏢 +40 Director XP | 🪙 +75 Credits',
+    effect: { xpRole: 'director', xpAmount: 40, nurseCredits: 75 },
+    weight: 1
+  },
+  {
+    id: 'charity_donation_drive',
+    title: 'Charity Donation Drive',
+    icon: '🎁',
+    category: 'donation',
+    description: 'A local charity drops off a donation of supplies and funds for the hospital during their weekly drive.',
+    effectText: '🏢 +40 Director XP | 🪙 +120 Credits',
+    effect: { xpRole: 'director', xpAmount: 40, nurseCredits: 120 },
+    weight: 1
+  },
+  {
+    id: 'fire_drill_alarm',
+    title: 'Fire Drill Alarm',
+    icon: '🚨',
+    category: 'emergency',
+    description: 'A scheduled fire drill sounds through the halls, and the nursing staff calmly walks patients through the safety routine.',
+    effectText: '👩‍⚕️ +70 Nurse XP | ⚡ -15 Energy',
+    effect: { xpRole: 'nurse', xpAmount: 70, energy: -15 },
+    weight: 1
+  },
+  {
+    id: 'vip_diplomat_checkin',
+    title: 'VIP Diplomat Check-in',
+    icon: '🎩',
+    category: 'celebrity',
+    description: 'A visiting diplomat quietly checks in for a routine consultation, requiring extra discretion from the medical team.',
+    effectText: '👨‍⚕️ +55 Doctor XP | 🪙 +50 Credits',
+    effect: { xpRole: 'doctor', xpAmount: 55, nurseCredits: 50 },
+    weight: 1
+  },
+  {
+    id: 'school_choir_performance',
+    title: 'School Choir Performance',
+    icon: '🎶',
+    category: 'social',
+    description: 'A local school choir performs songs in the cantina, and staff hand out extra refreshments to the crowd.',
+    effectText: '☕ +45 Cantina XP | 🥤 +10 Hydration',
+    effect: { xpRole: 'cantina', xpAmount: 45, hydration: 10 },
+    weight: 1
+  }
+];

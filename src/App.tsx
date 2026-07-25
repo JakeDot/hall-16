@@ -13,13 +13,15 @@ import {
   LOCATION_ROLE_MAP,
   WEATHER_META,
   WeatherCondition,
-  Achievement
+  Achievement,
+  RandomEventDef
 } from './types/game';
 import {
   INITIAL_PATIENTS,
   INITIAL_ITEMS,
   INITIAL_APPOINTMENTS,
-  LOCATIONS_META
+  LOCATIONS_META,
+  RANDOM_EVENTS
 } from './data/gameData';
 import { Header } from './components/Header';
 import { SceneView } from './components/SceneView';
@@ -36,6 +38,7 @@ import { RoleGroupModal } from './components/RoleGroupModal';
 import { WeatherModal } from './components/WeatherModal';
 import { CheatMenuModal } from './components/CheatMenuModal';
 import { TradeModal } from './components/TradeModal';
+import { RandomEventModal } from './components/RandomEventModal';
 import { generateDailyShiftGoals } from './utils/goalGenerator';
 import { addCareVitalRecord, generateInitialPatientVitals } from './utils/vitalsGenerator';
 import { sound } from './utils/audio';
@@ -156,7 +159,9 @@ export default function App() {
       temperatureCelsius: 24,
       forecast: ['rainy', 'stormy', 'clear_night', 'heatwave'],
       lightningFlash: false
-    }
+    },
+    activeRandomEvent: null,
+    randomEventsTriggeredCount: 0
   });
 
   const [isPatientLogOpen, setIsPatientLogOpen] = useState(false);
@@ -396,12 +401,29 @@ export default function App() {
     addLog(`🌤️ Environmental shift triggered: ${meta.title} (${meta.tempCelsius}°C). ${meta.gameEffectText}`, 'alert');
   };
 
+  // Weighted random pick from the shift event catalog
+  const pickRandomEvent = (): RandomEventDef => {
+    const totalWeight = RANDOM_EVENTS.reduce((sum, e) => sum + e.weight, 0);
+    let roll = Math.random() * totalWeight;
+    for (const evt of RANDOM_EVENTS) {
+      roll -= evt.weight;
+      if (roll <= 0) return evt;
+    }
+    return RANDOM_EVENTS[RANDOM_EVENTS.length - 1];
+  };
+
   // Time Progression & Dynamic Environmental Weather Cycles
   const handleAdvanceTime = (minutes: number) => {
     const currentDuration = state.weather?.durationMinsLeft ?? 30;
     const isWeatherExpiring = currentDuration - minutes <= 0;
     const nextCondition: WeatherCondition | null = isWeatherExpiring
       ? (state.weather?.forecast?.[0] || 'stormy')
+      : null;
+
+    // Random Shift Event Roll (~35% chance per hour advanced, skipped if one's already showing)
+    const eventChance = Math.min(0.9, (minutes / 60) * 0.35);
+    const rolledEvent: RandomEventDef | null = !state.activeRandomEvent && Math.random() < eventChance
+      ? pickRandomEvent()
       : null;
 
     setState(prev => {
@@ -448,15 +470,43 @@ export default function App() {
 
       const nextStormCount = (prev.stormyNightsCount || 0) + addedStormNights;
 
+      // Apply Random Shift Event Rewards
+      let nextRoleProgress = prev.roleProgress;
+      let nextNurseCredits = prev.nurseCredits;
+      let eventEnergyDelta = 0;
+      let eventHydrationDelta = 0;
+
+      if (rolledEvent) {
+        const role = rolledEvent.effect.xpRole;
+        const current = nextRoleProgress[role] || { xp: 0, level: 1, credits: 0 };
+        const newXp = current.xp + rolledEvent.effect.xpAmount;
+        const newLevel = Math.floor(newXp / 200) + 1;
+        const addedCredits = rolledEvent.effect.nurseCredits || 0;
+
+        nextRoleProgress = {
+          ...nextRoleProgress,
+          [role]: { xp: newXp, level: newLevel, credits: current.credits + addedCredits }
+        };
+        nextNurseCredits = Object.values(nextRoleProgress).reduce((acc, r) => acc + (r.credits || 0), 0);
+        eventEnergyDelta = rolledEvent.effect.energy || 0;
+        eventHydrationDelta = rolledEvent.effect.hydration || 0;
+      }
+
       const updatedState: GameState = {
         ...prev,
         timeInMinutes: nextTime,
         stormyNightsCount: nextStormCount,
         weather: nextWeatherState,
+        roleProgress: nextRoleProgress,
+        nurseCredits: nextNurseCredits,
+        activeRandomEvent: rolledEvent || prev.activeRandomEvent,
+        randomEventsTriggeredCount: rolledEvent
+          ? (prev.randomEventsTriggeredCount || 0) + 1
+          : (prev.randomEventsTriggeredCount || 0),
         playerVitals: {
           ...prev.playerVitals,
-          energy: Math.max(10, prev.playerVitals.energy - energyLoss),
-          hydration: Math.max(10, prev.playerVitals.hydration - Math.floor(hydrationLoss))
+          energy: Math.max(10, Math.min(100, prev.playerVitals.energy - energyLoss + eventEnergyDelta)),
+          hydration: Math.max(10, Math.min(100, prev.playerVitals.hydration - Math.floor(hydrationLoss) + eventHydrationDelta))
         }
       };
 
@@ -468,7 +518,14 @@ export default function App() {
       if (nextCondition === 'stormy') sound.playThunder();
       if (nextCondition === 'rainy') sound.playRain();
       addLog(`⚡ ENVIRONMENTAL EVENT: Weather changed to ${newMeta.title} (${newMeta.tempCelsius}°C)! ${newMeta.gameEffectText}`, 'alert');
-    } else {
+    }
+
+    if (rolledEvent) {
+      sound.playSuccess();
+      addLog(`${rolledEvent.icon} SHIFT EVENT: ${rolledEvent.title}! ${rolledEvent.effectText}`, 'success');
+    }
+
+    if (!nextCondition && !rolledEvent) {
       addLog(`Advanced shift time by ${minutes} minutes.`, 'info');
     }
   };
@@ -1376,6 +1433,14 @@ export default function App() {
           state={state}
           onClose={() => setIsWeatherOpen(false)}
           onChangeWeather={handleChangeWeather}
+        />
+      )}
+
+      {/* Random Shift Event Popup (guest visits, inspections, donations, etc.) */}
+      {state.activeRandomEvent && (
+        <RandomEventModal
+          event={state.activeRandomEvent}
+          onClose={() => setState(prev => ({ ...prev, activeRandomEvent: null }))}
         />
       )}
 
