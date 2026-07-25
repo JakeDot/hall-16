@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   GameState,
   Patient,
@@ -39,6 +39,7 @@ import { TradeModal } from './components/TradeModal';
 import { generateDailyShiftGoals } from './utils/goalGenerator';
 import { addCareVitalRecord, generateInitialPatientVitals } from './utils/vitalsGenerator';
 import { sound } from './utils/audio';
+import { music } from './utils/music';
 import {
   X,
   Sparkles,
@@ -169,6 +170,22 @@ export default function App() {
   const [isWeatherOpen, setIsWeatherOpen] = useState(false);
   const [isCheatMenuOpen, setIsCheatMenuOpen] = useState(false);
   const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
+  const [isMusicMuted, setIsMusicMuted] = useState(music.isMuted());
+
+  // Browsers block audio with sound until a user gesture; start the soundtrack
+  // on the first click/tap anywhere in the app, then stop listening.
+  useEffect(() => {
+    const startOnFirstInteraction = () => {
+      music.start();
+      window.removeEventListener('pointerdown', startOnFirstInteraction);
+    };
+    window.addEventListener('pointerdown', startOnFirstInteraction);
+    return () => window.removeEventListener('pointerdown', startOnFirstInteraction);
+  }, []);
+
+  const handleToggleMusic = () => {
+    setIsMusicMuted(music.toggleMute());
+  };
 
   // Execute Inter-Role Trade Deal
   const handleExecuteTrade = (tradeData: {
@@ -1160,6 +1177,8 @@ export default function App() {
         onOpenTradeModal={() => setIsTradeModalOpen(true)}
         onPlayerSelfCare={handlePlayerSelfCare}
         onSwitchRole={handleSwitchRole}
+        isMusicMuted={isMusicMuted}
+        onToggleMusic={handleToggleMusic}
       />
 
       {/* Main Game Container */}

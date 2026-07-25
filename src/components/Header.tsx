@@ -19,7 +19,9 @@ import {
   Wrench,
   Users,
   Handshake,
-  Coins
+  Coins,
+  Volume2,
+  VolumeX
 } from 'lucide-react';
 import { GameState, GamePhase, WEATHER_META, RoleGroup, ROLE_GROUP_INFO } from '../types/game';
 import { sound } from '../utils/audio';
@@ -40,6 +42,8 @@ interface HeaderProps {
   onOpenTradeModal: () => void;
   onPlayerSelfCare: (type: 'water' | 'food' | 'med') => void;
   onSwitchRole: (role: RoleGroup) => void;
+  isMusicMuted: boolean;
+  onToggleMusic: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -57,7 +61,9 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenCheatMenu,
   onOpenTradeModal,
   onPlayerSelfCare,
-  onSwitchRole
+  onSwitchRole,
+  isMusicMuted,
+  onToggleMusic
 }) => {
   const [showRoleDropdown, setShowRoleDropdown] = useState(false);
   const currentRole: RoleGroup = state.activeRole || 'nurse';
@@ -161,6 +167,18 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             );
           })()}
+
+          {/* Background Soundtrack Mute Toggle */}
+          <button
+            onClick={() => {
+              sound.playClick();
+              onToggleMusic();
+            }}
+            className="ml-2 p-1.5 rounded-lg border border-slate-700 bg-slate-900/60 hover:bg-slate-800 text-slate-300 hover:text-cyan-300 transition-colors cursor-pointer"
+            title={isMusicMuted ? 'Unmute soundtrack' : 'Mute soundtrack'}
+          >
+            {isMusicMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4 text-cyan-400" />}
+          </button>
         </div>
 
         {/* Player Self Vitals & Currency Balance */}
