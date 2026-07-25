@@ -1,0 +1,8 @@
+{
+  "name": "Hall 16 - Hospital Adventure",
+  "description": "A point-and-click hospital adventure starting in Hall 16 ward with 10 patients, daily routines, and hospital exploration including MRI, CT scans, and appointments.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
