@@ -277,6 +277,27 @@ export const WEATHER_META: Record<WeatherCondition, WeatherEffectInfo> = {
   }
 };
 
+export type RandomEventCategory = 'social' | 'inspection' | 'donation' | 'emergency' | 'celebrity';
+
+export interface RandomEventEffect {
+  energy?: number;      // player vitals delta, can be negative
+  hydration?: number;   // player vitals delta, can be negative
+  nurseCredits?: number; // credits awarded to the triggered role's budget
+  xpRole: RoleGroup;     // which role group's XP this event affects
+  xpAmount: number;
+}
+
+export interface RandomEventDef {
+  id: string;
+  title: string;
+  icon: string;
+  category: RandomEventCategory;
+  description: string;
+  effectText: string; // human-readable summary shown in the log & modal
+  effect: RandomEventEffect;
+  weight: number; // relative chance of being picked when an event fires
+}
+
 export interface RoleProgress {
   xp: number;
   level: number;
@@ -390,4 +411,6 @@ export interface GameState {
   achievements: Achievement[];
   activeRole: RoleGroup;
   weather: WeatherState;
+  activeRandomEvent: RandomEventDef | null;
+  randomEventsTriggeredCount: number;
 }
