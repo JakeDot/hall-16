@@ -19,6 +19,53 @@ interface PatientVitalsChartProps {
   currentTimeStr?: string;
 }
 
+// Custom Glassmorphism Tooltip for Recharts
+export const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    const dataPoint = payload[0].payload as VitalRecord;
+    return (
+      <div className="bg-slate-950/95 border border-cyan-500/40 p-3 rounded-xl shadow-xl backdrop-blur-md text-xs space-y-1.5 min-w-[170px]">
+        <div className="flex justify-between items-center pb-1 border-b border-slate-800">
+          <span className="font-bold text-cyan-300 flex items-center gap-1">
+            <Activity className="w-3.5 h-3.5 text-cyan-400" />
+            {label}
+          </span>
+          {dataPoint.note && (
+            <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+              {dataPoint.note}
+            </span>
+          )}
+        </div>
+
+        <div className="space-y-1 pt-0.5">
+          <div className="flex justify-between items-center text-rose-400 font-semibold">
+            <span>Heart Rate:</span>
+            <span className="font-mono font-bold text-sm">{dataPoint.heartRate} BPM</span>
+          </div>
+
+          <div className="flex justify-between items-center text-cyan-400 font-semibold">
+            <span>Systolic BP:</span>
+            <span className="font-mono font-bold text-sm">{dataPoint.systolicBP} mmHg</span>
+          </div>
+
+          <div className="flex justify-between items-center text-indigo-400 font-semibold">
+            <span>Diastolic BP:</span>
+            <span className="font-mono font-bold text-sm">{dataPoint.diastolicBP} mmHg</span>
+          </div>
+
+          {dataPoint.oxygenLevel && (
+            <div className="flex justify-between items-center text-emerald-400 font-semibold">
+              <span>SpO2 Oxygen:</span>
+              <span className="font-mono font-bold">{dataPoint.oxygenLevel}%</span>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
 export const PatientVitalsChart: React.FC<PatientVitalsChartProps> = ({
   patient,
   currentTimeStr = '02:15 PM'
@@ -86,52 +133,6 @@ export const PatientVitalsChart: React.FC<PatientVitalsChartProps> = ({
   const isBpHigh = latestRecord.systolicBP > 135 || latestRecord.diastolicBP > 88;
   const isStatusElevated = isHrHigh || isBpHigh;
 
-  // Custom Glassmorphism Tooltip for Recharts
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      const dataPoint = payload[0].payload as VitalRecord;
-      return (
-        <div className="bg-slate-950/95 border border-cyan-500/40 p-3 rounded-xl shadow-xl backdrop-blur-md text-xs space-y-1.5 min-w-[170px]">
-          <div className="flex justify-between items-center pb-1 border-b border-slate-800">
-            <span className="font-bold text-cyan-300 flex items-center gap-1">
-              <Activity className="w-3.5 h-3.5 text-cyan-400" />
-              {label}
-            </span>
-            {dataPoint.note && (
-              <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                {dataPoint.note}
-              </span>
-            )}
-          </div>
-
-          <div className="space-y-1 pt-0.5">
-            <div className="flex justify-between items-center text-rose-400 font-semibold">
-              <span>Heart Rate:</span>
-              <span className="font-mono font-bold text-sm">{dataPoint.heartRate} BPM</span>
-            </div>
-
-            <div className="flex justify-between items-center text-cyan-400 font-semibold">
-              <span>Systolic BP:</span>
-              <span className="font-mono font-bold text-sm">{dataPoint.systolicBP} mmHg</span>
-            </div>
-
-            <div className="flex justify-between items-center text-indigo-400 font-semibold">
-              <span>Diastolic BP:</span>
-              <span className="font-mono font-bold text-sm">{dataPoint.diastolicBP} mmHg</span>
-            </div>
-
-            {dataPoint.oxygenLevel && (
-              <div className="flex justify-between items-center text-emerald-400 font-semibold">
-                <span>SpO2 Oxygen:</span>
-                <span className="font-mono font-bold">{dataPoint.oxygenLevel}%</span>
-              </div>
-            )}
-          </div>
-        </div>
-      );
-    }
-    return null;
-  };
 
   return (
     <div className="space-y-4 p-4 rounded-2xl bg-slate-950 border border-slate-800 text-slate-100 shadow-inner">
